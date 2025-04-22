@@ -58,11 +58,11 @@ export default function Footer() {
               </h3>
 
               <p className="mb-4">
-                Welcome to DECA Games ("we", "our", or "us"). Your privacy is
-                important to us. This Privacy Policy explains how we collect,
-                use, disclose, and safeguard your information when you use our
-                platform to transform DECA practice tests into interactive
-                learning games.
+                Welcome to DECA Games (&quot;we&quot;, &quot;our&quot;, or
+                &quot;us&quot;). Your privacy is important to us. This Privacy
+                Policy explains how we collect, use, disclose, and safeguard
+                your information when you use our platform to transform DECA
+                practice tests into interactive learning games.
               </p>
 
               <p className="mb-4">
