@@ -2,9 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import Header from "@/components/Header";
+import Button from "@/components/ui/Button";
+import Card, { CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import Icon, { IconBox } from "@/components/ui/Icon";
 
 // PDF processing statuses
 type ProcessingStatus = "idle" | "processing" | "success" | "error";
@@ -106,17 +108,17 @@ export default function Upload() {
   const renderProcessingStatus = () => {
     if (processingStatus === "processing") {
       return (
-        <div className="w-full mb-6">
+        <div className="w-full mb-6 animate-fade-in">
           <h3 className="text-lg font-medium mb-2">Processing PDF...</h3>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className="w-full bg-[var(--card-border)] rounded-full h-2.5">
             <div
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              className="bg-[var(--accent)] h-2.5 rounded-full transition-all duration-300"
               style={{ width: `${processingProgress}%` }}
             ></div>
           </div>
-          <div className="mt-2 text-sm text-gray-600 flex items-center">
+          <div className="mt-3 text-sm opacity-80 flex items-center">
             <svg
-              className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
+              className="animate-spin -ml-1 mr-2 h-4 w-4 text-[var(--accent)]"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -137,7 +139,7 @@ export default function Upload() {
             </svg>
             Extracting questions, answers and explanations
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs opacity-60">
             This might take a few moments depending on the size of the PDF
           </p>
         </div>
@@ -147,22 +149,22 @@ export default function Upload() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Header title="Upload Practice Test" />
 
       <main className="flex-1 flex flex-col items-center p-6 md:p-24">
         <div className="max-w-3xl w-full flex flex-col items-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 md:hidden">
-            Upload Practice Test
+          <h1 className="text-3xl md:text-4xl font-semibold mb-8 md:hidden">
+            <span className="text-[#3B82F6]">Upload Practice Test</span>
           </h1>
 
-          <div className="w-full mb-8">
+          <Card className="w-full mb-8 p-0 overflow-hidden">
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
                 isDragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 hover:border-blue-400"
+                  ? "border-[var(--accent)] bg-[var(--accent)] bg-opacity-5"
+                  : "border-[var(--card-border)] hover:border-[var(--accent)] hover:border-opacity-50"
               } ${
                 processingStatus === "processing"
                   ? "opacity-50 pointer-events-none"
@@ -171,9 +173,12 @@ export default function Upload() {
             >
               <input {...getInputProps()} />
               {file ? (
-                <div>
+                <div className="animate-fade-in">
+                  <IconBox color="primary" size="md" className="mx-auto mb-3">
+                    <Icon name="upload" size="md" />
+                  </IconBox>
                   <p className="text-lg font-medium">{file.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm opacity-70 mt-1">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                   <button
@@ -181,100 +186,183 @@ export default function Upload() {
                       e.stopPropagation();
                       setFile(null);
                     }}
-                    className="mt-2 text-sm text-red-600 hover:underline"
+                    className="mt-3 text-sm text-red-600 hover:underline inline-flex items-center"
                     disabled={processingStatus === "processing"}
                   >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-1"
+                    >
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
                     Remove
                   </button>
                 </div>
               ) : (
-                <div>
-                  <p className="text-lg">
+                <div className="py-6">
+                  <div className="relative mx-auto mb-4 w-24 h-24">
+                    <div className="bg-[var(--accent)] rounded-full w-full h-full flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-xl font-medium mb-2">
                     Drag & drop your DECA practice test PDF here
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    or click to select a file
-                  </p>
+                  <p className="opacity-70 mt-1">or click to select a file</p>
                 </div>
               )}
             </div>
 
-            {error && <div className="mt-3 text-red-600 text-sm">{error}</div>}
-          </div>
+            {error && (
+              <div className="mt-3 text-red-600 text-sm p-3 bg-red-50 rounded-lg flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                {error}
+              </div>
+            )}
+          </Card>
 
           {renderProcessingStatus()}
 
-          <div className="w-full mb-6">
-            <h2 className="text-lg font-medium mb-3">Number of Questions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {questionCountOptions.map((count) => (
-                <button
-                  key={count}
-                  onClick={() => setQuestionCount(count)}
-                  disabled={processingStatus === "processing"}
-                  className={`py-2 px-4 border rounded-md transition-all ${
-                    questionCount === count
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "hover:border-blue-300"
-                  } ${
-                    processingStatus === "processing"
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  {count} Questions
-                </button>
-              ))}
-            </div>
-          </div>
+          <Card animate={processingStatus === "idle"} className="w-full mb-6">
+            <CardHeader>
+              <CardTitle>Number of Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {questionCountOptions.map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => setQuestionCount(count)}
+                    disabled={processingStatus === "processing"}
+                    className={`py-3 px-4 border rounded-md transition-all ${
+                      questionCount === count
+                        ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                        : "hover:border-[var(--accent)] hover:border-opacity-50"
+                    } ${
+                      processingStatus === "processing"
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    {count} Questions
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="w-full mb-6">
-            <h2 className="text-lg font-medium mb-3">Game Options</h2>
-            <div className="flex items-center border rounded-md p-4 hover:border-blue-300 transition-all">
-              <input
-                type="checkbox"
-                id="timerToggle"
-                checked={timerEnabled}
-                onChange={(e) => setTimerEnabled(e.target.checked)}
-                disabled={processingStatus === "processing"}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="timerToggle" className="ml-2 text-sm font-medium">
-                Enable timer (1 minute per question total)
-              </label>
-            </div>
-          </div>
+          <Card animate className="w-full mb-8">
+            <CardHeader>
+              <CardTitle>Game Options</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center border rounded-md p-4 hover:border-[var(--accent)] hover:border-opacity-50 transition-all">
+                <input
+                  type="checkbox"
+                  id="timerToggle"
+                  checked={timerEnabled}
+                  onChange={(e) => setTimerEnabled(e.target.checked)}
+                  disabled={processingStatus === "processing"}
+                  className="w-5 h-5 text-[var(--accent)] rounded focus:ring-[var(--accent)]"
+                />
+                <label htmlFor="timerToggle" className="ml-3 font-medium">
+                  Enable timer (1 minute per question total)
+                </label>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex gap-4">
-            <Link
+            <Button
               href="/"
-              className={`px-6 py-2 border rounded-md hover:bg-gray-50 ${
-                processingStatus === "processing"
-                  ? "opacity-50 pointer-events-none"
-                  : ""
-              }`}
+              variant="outline"
+              disabled={processingStatus === "processing"}
             >
               Cancel
-            </Link>
+            </Button>
 
-            <button
+            <Button
               onClick={handleUpload}
               disabled={!file || processingStatus === "processing"}
-              className={`px-6 py-2 rounded-md flex items-center ${
+              variant={
                 !file || processingStatus === "processing"
-                  ? "bg-gray-200 text-gray-600 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+                  ? "outline"
+                  : "primary"
+              }
             >
               {processingStatus === "processing" ? (
-                <>Processing...</>
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing...
+                </span>
               ) : (
-                <>Create Game</>
+                <span className="flex items-center">
+                  Create Game{" "}
+                  <Icon name="arrowRight" size="sm" className="ml-2" />
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

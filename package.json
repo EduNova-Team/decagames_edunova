@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.2",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.8.4",
     "daisyui": "^5.0.27",
     "next": "15.3.1",

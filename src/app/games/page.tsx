@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
+import Card, { CardContent } from "@/components/ui/Card";
+import Icon, { IconBox } from "@/components/ui/Icon";
 
 interface Game {
   id: string;
@@ -121,101 +124,130 @@ export default function MyGames() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Header title="My Games" />
 
       <main className="flex-1 flex flex-col items-center p-6 md:p-24">
         <div className="max-w-4xl w-full">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold md:hidden">
-              My Games
+            <h1 className="text-3xl md:text-4xl font-semibold md:hidden">
+              <span className="text-[#3B82F6]">My Games</span>
             </h1>
 
             <div className="md:ml-auto">
-              <Link
-                href="/upload"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Create New Game
-              </Link>
+              <Button href="/upload" variant="primary">
+                <span className="flex items-center">
+                  Create New Game{" "}
+                  <Icon name="upload" size="sm" className="ml-2" />
+                </span>
+              </Button>
             </div>
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-pulse">Loading your games...</div>
+            <div className="text-center py-12 animate-pulse">
+              <IconBox color="primary" size="md" className="mx-auto mb-4">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </IconBox>
+              <p className="text-lg">Loading your games...</p>
             </div>
           ) : games.length === 0 ? (
-            <div className="text-center py-12 border rounded-lg">
-              <p className="text-xl mb-4">You don&apos;t have any games yet</p>
-              <Link href="/upload" className="text-blue-600 hover:underline">
-                Upload a practice test to get started
-              </Link>
-            </div>
+            <Card className="text-center py-12">
+              <CardContent>
+                <IconBox color="primary" size="lg" className="mx-auto mb-4">
+                  <Icon name="play" size="md" />
+                </IconBox>
+                <p className="text-xl mb-4">
+                  You don&apos;t have any games yet
+                </p>
+                <Button href="/upload" variant="primary">
+                  Upload a practice test to get started
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-fade-in">
               {games.map((game) => (
-                <div
+                <Card
                   key={game.id}
-                  className="border rounded-lg p-5 flex flex-col md:flex-row md:items-center md:justify-between"
+                  className="p-5 hover:shadow-md transition-all"
                 >
-                  <div className="mb-4 md:mb-0">
-                    <h2 className="text-xl font-semibold">{game.name}</h2>
-                    <div className="text-sm text-gray-500">
-                      Played: {formatDate(game.lastPlayed)} •{" "}
-                      {game.questionCount} questions
-                    </div>
-                    {game.status === "completed" &&
-                      game.score !== undefined && (
-                        <div className="mt-1 text-sm">
-                          <span className="font-medium">Score: </span>
-                          <span
-                            className={
-                              game.score / game.questionCount >= 0.7
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }
-                          >
-                            {game.score} / {game.questionCount} (
-                            {Math.round(
-                              (game.score / game.questionCount) * 100
-                            )}
-                            %)
-                          </span>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div className="mb-4 md:mb-0">
+                      <h2 className="text-xl font-semibold">{game.name}</h2>
+                      <div className="text-sm opacity-70">
+                        Played: {formatDate(game.lastPlayed)} •{" "}
+                        {game.questionCount} questions
+                      </div>
+                      {game.status === "completed" &&
+                        game.score !== undefined && (
+                          <div className="mt-1 text-sm">
+                            <span className="font-medium">Score: </span>
+                            <span
+                              className={
+                                game.score / game.questionCount >= 0.7
+                                  ? "text-[var(--secondary)]"
+                                  : "text-red-600"
+                              }
+                            >
+                              {game.score} / {game.questionCount} (
+                              {Math.round(
+                                (game.score / game.questionCount) * 100
+                              )}
+                              %)
+                            </span>
+                          </div>
+                        )}
+                      {game.status === "started" && (
+                        <div className="mt-1 text-sm text-amber-600">
+                          In progress
                         </div>
                       )}
-                    {game.status === "started" && (
-                      <div className="mt-1 text-sm text-amber-600">
-                        In progress
-                      </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="flex gap-3">
-                    {game.status === "completed" ? (
-                      <button
-                        onClick={() => handleReplay(game)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      >
-                        Replay
-                      </button>
-                    ) : (
-                      <Link
-                        href={`/play/${game.id}`}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-center"
-                      >
-                        Continue
-                      </Link>
-                    )}
+                    <div className="flex gap-3">
+                      {game.status === "completed" ? (
+                        <Button
+                          onClick={() => handleReplay(game)}
+                          variant="primary"
+                        >
+                          Replay
+                        </Button>
+                      ) : (
+                        <Button href={`/play/${game.id}`} variant="primary">
+                          Continue
+                        </Button>
+                      )}
 
-                    <button
-                      onClick={() => deleteGame(game.id)}
-                      className="px-4 py-2 border text-red-600 border-red-200 rounded-md hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                      <Button
+                        onClick={() => deleteGame(game.id)}
+                        variant="outline"
+                        className="text-red-600 hover:border-red-200 hover:bg-red-50"
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -223,89 +255,62 @@ export default function MyGames() {
       </main>
 
       {/* Question Count Modal */}
-      {showQuestionModal && selectedGame && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
-            {/* X button to close modal */}
-            <button
-              onClick={() => setShowQuestionModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-              aria-label="Close"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+      <Modal
+        isOpen={showQuestionModal && !!selectedGame}
+        onClose={() => setShowQuestionModal(false)}
+        title="Select Question Count"
+      >
+        <p className="mb-6 opacity-80">
+          How many questions would you like to include?
+        </p>
 
-            <h2 className="text-xl font-bold mb-4">Select Question Count</h2>
-            <p className="mb-4">
-              How many questions would you like to include?
-            </p>
+        <div className="mb-8">
+          <div className="grid grid-cols-2 gap-3">
+            {selectedGame &&
+              getQuestionOptions(selectedGame.questionCount).map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  onClick={() => setQuestionCount(count)}
+                  className={`py-3 px-4 border rounded-md transition-all ${
+                    questionCount === count
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "hover:border-[var(--accent)] hover:border-opacity-50"
+                  }`}
+                >
+                  {count} Questions
+                </button>
+              ))}
 
-            <div className="mb-6">
-              <div className="grid grid-cols-2 gap-3">
-                {getQuestionOptions(selectedGame.questionCount).map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    onClick={() => setQuestionCount(count)}
-                    className={`py-3 px-4 border rounded-md ${
-                      questionCount === count
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-800 hover:bg-gray-50"
-                    }`}
-                  >
-                    {count} Questions
-                  </button>
-                ))}
-
-                {/* Show "All Questions" option if total questions doesn't match any preset */}
-                {!getQuestionOptions(selectedGame.questionCount).includes(
-                  selectedGame.questionCount
-                ) && (
-                  <button
-                    type="button"
-                    onClick={() => setQuestionCount(selectedGame.questionCount)}
-                    className={`py-3 px-4 border rounded-md ${
-                      questionCount === selectedGame.questionCount
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-800 hover:bg-gray-50"
-                    }`}
-                  >
-                    All ({selectedGame.questionCount})
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowQuestionModal(false)}
-                className="px-4 py-2 border rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={startGame}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Start Game
-              </button>
-            </div>
+            {/* Show "All Questions" option if total questions doesn't match any preset */}
+            {selectedGame &&
+              !getQuestionOptions(selectedGame.questionCount).includes(
+                selectedGame.questionCount
+              ) && (
+                <button
+                  type="button"
+                  onClick={() => setQuestionCount(selectedGame.questionCount)}
+                  className={`py-3 px-4 border rounded-md transition-all ${
+                    questionCount === selectedGame.questionCount
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "hover:border-[var(--accent)] hover:border-opacity-50"
+                  }`}
+                >
+                  All ({selectedGame.questionCount})
+                </button>
+              )}
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="flex justify-end gap-3">
+          <Button onClick={() => setShowQuestionModal(false)} variant="outline">
+            Cancel
+          </Button>
+          <Button onClick={startGame} variant="primary">
+            Start Game
+          </Button>
+        </div>
+      </Modal>
+    </>
   );
 }

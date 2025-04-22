@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import Button from "@/components/ui/Button";
+import Card, {
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/Card";
 
 // Data types for the game
 interface Option {
@@ -122,6 +129,9 @@ export default function GamePlay() {
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<string, string>
   >({});
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
+    new Set()
+  );
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(60); // 1 minute per question in seconds
   const [isClient, setIsClient] = useState(false);
@@ -212,11 +222,32 @@ export default function GamePlay() {
     fetchGameData();
   }, [gameId, isClient, requestedCount]);
 
-  // Handle starting the game
+  // Handle flagging a question
+  const toggleFlagQuestion = (questionId: string) => {
+    setFlaggedQuestions((prev) => {
+      const newFlagged = new Set(prev);
+      if (newFlagged.has(questionId)) {
+        newFlagged.delete(questionId);
+      } else {
+        newFlagged.add(questionId);
+      }
+      return newFlagged;
+    });
+  };
+
+  // Handle navigating to a specific question
+  const navigateToQuestion = (index: number) => {
+    if (index >= 0 && index < (gameData?.questions.length || 0)) {
+      setCurrentQuestionIndex(index);
+    }
+  };
+
+  // Start game function - reset flagged questions too
   const startGame = () => {
     setGameState("playing");
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
+    setFlaggedQuestions(new Set());
 
     // Set total time for the entire game - 1 minute per question
     if (timerEnabled && gameData) {
@@ -238,14 +269,8 @@ export default function GamePlay() {
 
     setSelectedAnswers(newSelectedAnswers);
 
-    // Automatically move to next question after a short delay
-    setTimeout(() => {
-      if (currentQuestionIndex < (gameData?.questions?.length || 0) - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-      } else {
-        setGameState("results");
-      }
-    }, 1000);
+    // Don't automatically move to next question now that we have navigation
+    // User can use the navigation controls to move between questions
   };
 
   // Calculate score
@@ -429,33 +454,108 @@ export default function GamePlay() {
         );
       }
 
+      const isFlagged = flaggedQuestions.has(currentQuestion.id);
+
       return (
-        <div className="flex min-h-full flex-col items-center p-6 md:p-24">
+        <div className="flex min-h-full flex-col items-center p-4 sm:p-6 md:p-24">
           <div className="max-w-3xl w-full">
             <div className="flex justify-between items-center mb-6">
-              <div className="text-lg font-medium">
+              <div className="text-sm sm:text-lg font-medium">
                 Question {currentQuestionIndex + 1} of{" "}
                 {gameData.questions.length}
               </div>
-              {timerEnabled && (
-                <div
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    timeRemaining <= 10
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-200 text-gray-800"
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  onClick={() => toggleFlagQuestion(currentQuestion.id)}
+                  className={`p-1.5 sm:p-2 rounded-full transition-colors ${
+                    isFlagged
+                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
+                  title={
+                    isFlagged ? "Unflag this question" : "Flag this question"
+                  }
                 >
-                  {formatTimeRemaining()}
-                </div>
-              )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill={isFlagged ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                  </svg>
+                </button>
+                {timerEnabled && (
+                  <div
+                    className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm ${
+                      timeRemaining <= 10
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-200 text-gray-800"
+                    }`}
+                  >
+                    {formatTimeRemaining()}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="text-xl md:text-2xl font-medium mb-6">
+            {/* Combined Minimalistic Progress and Navigation */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex justify-between mb-2">
+                <span className="text-xs sm:text-sm font-medium">
+                  Question {currentQuestionIndex + 1} of{" "}
+                  {gameData.questions.length}
+                </span>
+                <span className="text-xs sm:text-sm text-[var(--foreground)] opacity-70">
+                  {Object.keys(selectedAnswers).length} answered
+                </span>
+              </div>
+
+              <div className="flex w-full gap-0.5 sm:gap-1">
+                {gameData.questions.map((question, index) => {
+                  const isAnswered = !!selectedAnswers[question.id];
+                  const isCurrent = index === currentQuestionIndex;
+                  const isQuestionFlagged = flaggedQuestions.has(question.id);
+
+                  let buttonClass =
+                    "h-1.5 sm:h-2 transition-all rounded-sm flex-1 ";
+
+                  if (isCurrent && isQuestionFlagged) {
+                    buttonClass += "bg-yellow-500";
+                  } else if (isCurrent) {
+                    buttonClass += "bg-blue-600";
+                  } else if (isQuestionFlagged) {
+                    buttonClass += "bg-yellow-400";
+                  } else if (isAnswered) {
+                    buttonClass += "bg-green-500";
+                  } else {
+                    buttonClass += "bg-gray-300";
+                  }
+
+                  return (
+                    <button
+                      key={question.id}
+                      onClick={() => navigateToQuestion(index)}
+                      className={buttonClass}
+                      aria-label={`Go to question ${index + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-medium mb-4 sm:mb-6">
                 {currentQuestion.text}
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {currentQuestion.options.map((option) => {
                   const isSelected =
                     selectedAnswers[currentQuestion.id] === option.label;
@@ -466,11 +566,10 @@ export default function GamePlay() {
                       onClick={() =>
                         selectAnswer(currentQuestion.id, option.label)
                       }
-                      disabled={!!selectedAnswers[currentQuestion.id]}
-                      className={`p-4 border rounded-lg text-left transition-colors ${
+                      className={`p-3 sm:p-4 border rounded-lg text-left transition-colors ${
                         isSelected
                           ? "border-blue-500 bg-blue-600 text-white"
-                          : "bg-gray-50 hover:border-blue-300 text-gray-800 hover:bg-gray-100"
+                          : "bg-gray-50 hover:border-blue-300 text-gray-800 hover:bg-gray-100 active:bg-blue-50 active:border-blue-200"
                       }`}
                     >
                       <span className="font-bold mr-2">{option.label}.</span>
@@ -479,6 +578,40 @@ export default function GamePlay() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Simplified Navigation Buttons */}
+            <div className="flex justify-between mt-6 sm:mt-8">
+              <Button
+                onClick={() => navigateToQuestion(currentQuestionIndex - 1)}
+                disabled={currentQuestionIndex === 0}
+                variant="outline"
+                className="px-2 sm:px-4 text-sm sm:text-base"
+              >
+                ← Previous
+              </Button>
+
+              {Object.keys(selectedAnswers).length ===
+                gameData.questions.length && (
+                <Button
+                  onClick={() => setGameState("results")}
+                  variant="primary"
+                  className="px-3 sm:px-5 text-sm sm:text-base"
+                >
+                  Finish Quiz
+                </Button>
+              )}
+
+              <Button
+                onClick={() => navigateToQuestion(currentQuestionIndex + 1)}
+                disabled={
+                  currentQuestionIndex === gameData.questions.length - 1
+                }
+                variant="outline"
+                className="px-2 sm:px-4 text-sm sm:text-base"
+              >
+                Next →
+              </Button>
             </div>
           </div>
         </div>
@@ -491,32 +624,65 @@ export default function GamePlay() {
       const percentage = Math.round((score / totalQuestions) * 100);
 
       return (
-        <div className="flex min-h-full flex-col items-center p-6 md:p-24">
+        <div className="flex min-h-full flex-col items-center p-4 sm:p-6 md:p-24">
           <div className="max-w-3xl w-full flex flex-col items-center text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
               Game Results
             </h1>
 
-            <div className="text-5xl font-bold mb-4 text-blue-600">
+            <div className="text-4xl sm:text-5xl font-bold mb-3 sm:mb-4 text-blue-600">
               {score} / {totalQuestions}
             </div>
 
-            <div className="text-2xl mb-8">You scored {percentage}%</div>
+            <div className="text-xl sm:text-2xl mb-6 sm:mb-8">
+              You scored {percentage}%
+            </div>
 
-            <div className="flex gap-4 mt-4">
-              <button
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 w-full sm:w-auto justify-center">
+              <Button
                 onClick={() => setGameState("review")}
-                className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                variant="primary"
+                className="px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base w-full sm:w-auto"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
                 Review Answers
-              </button>
+              </Button>
 
-              <Link
+              <Button
                 href="/"
-                className="px-6 py-3 border rounded-md bg-white text-gray-800 hover:bg-gray-50"
+                variant="outline"
+                className="px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base w-full sm:w-auto"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
                 Back to Home
-              </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -524,73 +690,228 @@ export default function GamePlay() {
     }
 
     if (gameState === "review" && gameData) {
-      return (
-        <div className="flex min-h-full flex-col items-center p-6 md:p-24">
-          <div className="max-w-4xl w-full">
-            <h1 className="text-3xl font-bold mb-8 text-center">
-              Review Answers
-            </h1>
+      const score = calculateScore();
+      const totalQuestions = gameData.questions.length;
+      const percentage = Math.round((score / totalQuestions) * 100);
 
-            <div className="space-y-8 mb-8">
+      return (
+        <div className="flex min-h-full flex-col items-center p-4 sm:p-6 md:p-24">
+          <div className="max-w-4xl w-full">
+            <div className="mb-6 sm:mb-8 text-center">
+              <h1 className="text-2xl sm:text-3xl font-semibold">
+                Review <span className="text-[var(--accent)]">Answers</span>
+              </h1>
+              <p className="mt-2 text-[var(--foreground)] opacity-70 text-sm sm:text-base">
+                You scored {score} out of {totalQuestions} ({percentage}%)
+              </p>
+            </div>
+
+            <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
               {gameData.questions.map((question, index) => {
                 const selectedAnswer = selectedAnswers[question.id];
                 const isCorrect = selectedAnswer === question.correctAnswer;
+                const isFlagged = flaggedQuestions.has(question.id);
 
                 return (
-                  <div
+                  <Card
                     key={question.id}
-                    className="border rounded-lg p-6 bg-white"
+                    className={`overflow-hidden animate-fade-in ${
+                      isFlagged ? "border-yellow-400 border-2" : ""
+                    }`}
                   >
-                    <h3 className="text-xl font-medium mb-4 text-gray-800">
-                      {index + 1}. {question.text}
-                    </h3>
+                    <CardHeader className="p-3 sm:p-4">
+                      <div className="flex items-start justify-between flex-wrap gap-2">
+                        <CardTitle className="flex items-center text-base sm:text-lg">
+                          <span className="mr-2 text-[var(--accent)]">
+                            {index + 1}.
+                          </span>
+                          {question.text}
+                          {isFlagged && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="ml-2 text-yellow-500"
+                            >
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                              <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
+                          )}
+                        </CardTitle>
+                        {isCorrect ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 whitespace-nowrap">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-1"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Correct
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 whitespace-nowrap">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-1"
+                            >
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Incorrect
+                          </span>
+                        )}
+                      </div>
+                    </CardHeader>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-                      {question.options.map((option) => {
-                        const isSelected = selectedAnswer === option.label;
-                        const isCorrectOption =
-                          option.label === question.correctAnswer;
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-5">
+                        {question.options.map((option) => {
+                          const isSelected = selectedAnswer === option.label;
+                          const isCorrectOption =
+                            option.label === question.correctAnswer;
 
-                        let bgColor = "bg-white text-gray-800";
-                        if (isSelected && isCorrect)
-                          bgColor =
-                            "bg-green-100 border-green-500 text-green-800";
-                        else if (isSelected && !isCorrect)
-                          bgColor = "bg-red-100 border-red-500 text-red-800";
-                        else if (isCorrectOption)
-                          bgColor =
-                            "bg-green-50 border-green-300 text-green-800";
+                          let optionClass =
+                            "border-[var(--card-border)] bg-[var(--card-bg)]";
+                          let iconElement = null;
 
-                        return (
-                          <div
-                            key={option.id}
-                            className={`p-3 border rounded ${bgColor}`}
-                          >
-                            <span className="font-bold mr-2">
-                              {option.label}.
-                            </span>
-                            {option.text}
-                          </div>
-                        );
-                      })}
-                    </div>
+                          if (isSelected && isCorrect) {
+                            optionClass =
+                              "bg-green-100 border-green-500 text-green-800 dark:bg-green-900 dark:text-green-200 dark:border-green-600";
+                            iconElement = (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="ml-auto"
+                              >
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            );
+                          } else if (isSelected && !isCorrect) {
+                            optionClass =
+                              "bg-red-100 border-red-500 text-red-800 dark:bg-red-900 dark:text-red-200 dark:border-red-600";
+                            iconElement = (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="ml-auto"
+                              >
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            );
+                          } else if (isCorrectOption) {
+                            optionClass =
+                              "bg-green-50 border-green-300 text-green-800 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800";
+                            iconElement = (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="ml-auto opacity-70"
+                              >
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            );
+                          }
 
-                    <div className="bg-gray-50 p-4 rounded-md text-gray-800">
-                      <p className="font-medium mb-1">Explanation:</p>
-                      <p>{question.explanation}</p>
-                    </div>
-                  </div>
+                          return (
+                            <div
+                              key={option.id}
+                              className={`p-2.5 sm:p-4 border rounded-lg transition-all flex items-center text-sm sm:text-base ${optionClass}`}
+                            >
+                              <div className="mr-2 flex-1">
+                                <span className="font-bold mr-2 text-[var(--accent)]">
+                                  {option.label}.
+                                </span>
+                                {option.text}
+                              </div>
+                              {iconElement}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+
+                    <CardFooter className="bg-[var(--card-bg)] border-t border-[var(--card-border)] p-3 sm:p-4">
+                      <div>
+                        <h4 className="text-[var(--accent)] font-semibold mb-1 sm:mb-2 text-sm sm:text-base">
+                          Explanation:
+                        </h4>
+                        <p className="text-[var(--foreground)] opacity-90 text-sm sm:text-base">
+                          {question.explanation}
+                        </p>
+                      </div>
+                    </CardFooter>
+                  </Card>
                 );
               })}
             </div>
 
-            <div className="flex justify-center mt-6">
-              <Link
+            <div className="flex justify-center mt-8 sm:mt-12">
+              <Button
                 href="/"
-                className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                variant="primary"
+                className="px-5 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
                 Back to Home
-              </Link>
+              </Button>
             </div>
           </div>
         </div>

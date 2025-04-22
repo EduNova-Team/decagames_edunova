@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Lexend } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const lexend = Lexend({
   subsets: ["latin"],
+  variable: "--font-lexend",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "DECAgames - Interactive DECA Competition Practice",
   description:
-    "Practice DECA competitions with interactive games converted from PDF tests",
+    "Transform your DECA practice tests into interactive learning games for better competition preparation",
+  keywords: [
+    "DECA",
+    "education",
+    "practice",
+    "competition",
+    "learning",
+    "games",
+  ],
+  authors: [{ name: "DECAgames Team" }],
   icons: {
     icon: "/deca_games.ico",
   },
@@ -29,9 +42,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="light" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${inter.variable} ${lexend.variable} antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}
       >
-        {children}
+        <div className="min-h-screen flex flex-col">
+          {children}
+          <Footer />
+        </div>
+        <Analytics />
       </body>
     </html>
   );

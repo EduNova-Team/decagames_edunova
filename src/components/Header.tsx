@@ -1,5 +1,6 @@
 import React from "react";
-import Link from "next/link";
+import Button from "@/components/ui/Button";
+import LogoLink from "@/components/ui/Logo";
 
 interface HeaderProps {
   title?: string;
@@ -7,28 +8,33 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title }) => {
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
-          <span className="text-2xl font-bold text-blue-600">DECAGames</span>
-        </Link>
+    <header className="bg-[#0F1117] border-b border-gray-800 sticky top-0 z-50 py-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <LogoLink size="md" darkMode={true} />
 
         {title && (
-          <h1 className="text-lg md:text-xl font-medium hidden md:block">
+          <h1 className="text-lg md:text-xl font-medium hidden md:block animate-fade-in text-white">
             {title}
           </h1>
         )}
 
-        <nav className="flex items-center space-x-4">
-          <Link href="/games" className="text-gray-600 hover:text-gray-900">
+        <nav className="flex items-center space-x-3">
+          <Button
+            href="/games"
+            variant="ghost"
+            size="sm"
+            className="font-medium text-gray-200 hover:text-white"
+          >
             My Games
-          </Link>
-          <Link
+          </Button>
+          <Button
             href="/upload"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            variant="primary"
+            size="sm"
+            className="font-medium"
           >
             Upload PDF
-          </Link>
+          </Button>
         </nav>
       </div>
     </header>
